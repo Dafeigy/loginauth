@@ -27,6 +27,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 class TokenData(BaseModel):
     username: str
+    access_token: str
 
 def verify_password(plain_password, hashed_password):
     return plain_password == hashed_password
