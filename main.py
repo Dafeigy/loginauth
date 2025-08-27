@@ -44,6 +44,10 @@ def create_access_token(data: dict, expires_delta: int):
     encoded_jwt = jwt.encode(to_encode, os.getenv("JWT_SECRET"), algorithm="HS256")
     return encoded_jwt
 
+@app.get("/")
+async def read_root():
+    return {"message": "Hello, World!"}
+
 @app.post("/token", response_model=TokenData)
 async def login_for_access_token(username: str, password: str):
     user = authenticate_user(username, password)
@@ -59,9 +63,10 @@ async def login_for_access_token(username: str, password: str):
 @app.get("/validate_token")
 async def validate_token(token: str = Depends(oauth2_scheme)):
     try:
-        payload = jwt.decode(token, os.getenv("JWT_SECRET"), algorithms=["HS256"])
-        if payload["exp"] < time.time():
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
+        payload = jwt.decode(token, os.getenv("JWT_SECRET"), algorithms=["HS256"], options={"verify_exp": True})
+        if payload.get("exp", 0) < time.time():
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Verify exp set to False. Token expired")
         return {"message": "Token is valid"}
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+
